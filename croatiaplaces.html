@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+    <meta charset="utf-8">
+<style>
+    
+</style>
+
+    <head>
+     <script src="http://d3js.org/d3.v3.min.js"></script>
+     <script src="http://d3js.org/topojson.v1.min.js"></script>
+     <script src="https://d3js.org/d3-geo.v1.min.js"></script>
+    </head>
+
+    <body>
+        <script>
+            var width = 1000;
+            var height = 700;
+
+            var svg = d3.select("body")
+                        .append("svg")
+                        .attr("width", width)
+                        .attr("height", height)
+                        .style("background", "#6F9283");
+
+            var projection = d3.geoMercator()
+                                .translate([ -1500, 6350 ])
+                                .scale(6900);
+
+            var path = d3.geoPath(projection);
+
+            d3.json("cro.json", loadShape);
+            d3.json("parsedTopojson.json", loadPlaces);
+
+            function loadShape (error, data) {
+                //console.log(data)
+
+                var counties = topojson.feature(data, data.objects.custom).features;
+
+                //console.log(counties)
+
+                svg.selectAll(".counties")
+                    .data(counties)
+                    .enter().append("path")
+                    .attr("class", "county")
+                    .attr("d", path)
+                    .style("fill", "#FFFFF");
+            }
+
+            function loadPlaces (error, data) {
+                console.log(data)
+
+                var counties = topojson.feature(data, data.objects.parsed).features;
+
+                console.log(counties)
+
+                svg.selectAll(".counties")
+                    .data(counties)
+                    .enter().append("path")
+                    .attr("class", "county")
+                    .attr("d", path)
+                    .style("fill", "#2F3E46");
+            }
+        </script>
+    </body>
+</html>
