@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en"></html>
+<html>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<style>
+    
+</style>
+
+    <head>
+     <link rel="stylesheet" href="style.css">
+     <script src="http://d3js.org/d3.v3.min.js"></script>
+     <script src="http://d3js.org/topojson.v1.min.js"></script>
+     <script src="https://d3js.org/d3-geo.v1.min.js"></script>
+     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    </head>
+
+    <body>
+        <div class="container-fluid app">
+            <div class="row">
+                <div class="col-8 canvas">
+                    <svg height="700" width="1000" style="background: rgb(58, 62, 59);">
+                    </svg>
+                </div>
+
+                <div class="col-4 searchApp">
+                    <input type="text" id="myInput" onkeyup="filterPlaces()" placeholder="Search for names.."> 
+                    <button type="button" id="addBtn" class="btn btn-info" onclick="addGroup()">Add</button>
+                    <div>
+                        <div class="radioButtons sufix">
+                            <input type="radio" id="sufix" name="form" onclick="setSufix()" value="Sufix" checked>
+                            <label for="sufix">Sufix</label>
+                        </div>
+                        <div class="radioButtons prefix">
+                            <input type="radio" id="prefix" name="form" onclick="setPrefix()" value="Prefix">
+                            <label for="prefix">Prefix</label>
+                        </div>
+                    </div>
+                    
+                    <ul id="groupsID">   
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        
+        
+
+        <script>
+            var width = 1000;
+            var height = 700;
+            var places = []
+            var match = []
+            var settlements;
+            var input;
+            var allMatched = [];
+            var fix = "Sufix";
+            var colors = ["#A6D3A0", "#153243", "#FCB07E", "#FB3640", "#3581B8", "#566246", "#C0B9DD", "#886F68", "#5F4BB6", "#26F0F1", "#D81E5B", "#EDFF86", "#0B4F6C", "#DCC7BE", "#000022", "#5E8C61", "#A2D729", "#FA824C"];
+
+
+            var svg = d3.select("svg")
+            var projection = d3.geoMercator()
+                                .translate([ -1500, 6350 ])
+                                .scale(6900);
+
+            var path = d3.geoPath(projection);
+
+            d3.json("cro.json", loadShape);
+            d3.json("parsedTopojson.json", loadPlaces);
+            
+
+            function loadShape (error, data) {
+                var counties = topojson.feature(data, data.objects.custom).features;
+
+                svg.selectAll(".counties")
+                    .data(counties)
+                    .enter().append("path")
+                    .attr("class", "county")
+                    .attr("d", path)
+                    .style("fill", "#242624")
+                    .style("stroke", "#000000");
+            }
+
+
+            function loadPlaces (error, data) {
+                //console.log(data)
+                settlements = topojson.feature(data, data.objects.parsed).features;
+                //console.log(settlements)
+
+                for (let i = 0; i < settlements.length; i++) {
+                    places.push(settlements[i].properties.name) 
+                }
+            }
+
+
+            function filterPlaces() {
+              input = document.getElementById('myInput');
+              match = [];
+
+              if(fix == "Sufix") {
+                for (i = 0; i < places.length; i++) {
+                    if(places[i].toLowerCase().search(input.value.toLowerCase()) == places[i].length - input.value.length && places[i].length - input.value.length != -1){
+                        match.push(i);
+                    }
+                }
+              }else if(fix == "Prefix") {
+                for (i = 0; i < places.length; i++) {
+                    if(places[i].toLowerCase().search(input.value.toLowerCase()) == 0){
+                        match.push(i);
+                    }
+                }
+              }
+              drawPlaces()
+            }
+
+
+            function drawPlaces(){
+                svg.selectAll(".settlements").remove()
+                var matchSettlements = []
+                if(match.length != settlements.length){
+                    for (let i = 0; i < match.length; i++) {
+                        matchSettlements.push(settlements[match[i]])
+                    }
+                }
+
+                svg.selectAll(".settlements")
+                    .data(matchSettlements)
+                    .enter().append("path")
+                    .attr("class", "settlements")
+                    .attr("d", path.pointRadius(3))
+                    .style("fill", "#ffffff")
+                    .style("stroke", "#000000");
+            }
+
+
+            function addGroup(){
+                var matchSettlements = []
+                if(match.length != settlements.length){
+                    for (let i = 0; i < match.length; i++) {
+                        matchSettlements.push(settlements[match[i]])
+                    }
+                }
+                var groupNumber;
+                if(allMatched.length == 0){
+                    groupNumber = 0;
+                }else{
+                    groupNumber = allMatched[allMatched.length - 1].index + 1;
+                }
+                svg.selectAll(".settlements"+groupNumber)
+                    .data(matchSettlements)
+                    .enter().append("path")
+                    .attr("class", "settlements"+groupNumber)
+                    .attr("d", path)
+                    .style("fill", colors[groupNumber])
+                    .style("stroke", "#000000");
+
+
+                var groupData = {string: input.value, type: fix, color: colors[groupNumber], number: matchSettlements.length};
+                allMatched.push({index: groupNumber, data: matchSettlements, metadata: groupData})
+                
+                if(allMatched[0].index == 0){
+                    groupNumber = 1;
+                }
+
+                //console.log(allMatched)
+                d3.select("#groupsID")
+                    .selectAll("li")
+                    .data(allMatched)
+                    .enter()
+                    .append("li")
+                    .attr("class", d => "list"+d.index)
+                    .html(d => '<div class="input-color"><div class="removeGroup" onclick="removeGroup('+ d.index +')">X</div><div class="color-box" style="background-color: '+ d.metadata.color +';"></div><div class="content">' + d.metadata.type + ": " + d.metadata.string + " (" + d.metadata.number +")" + '</div></div>');   
+            }
+
+
+            function setSufix(){
+                fix="Sufix"
+                filterPlaces()
+            }
+
+
+            function setPrefix(){
+                fix="Prefix"
+                filterPlaces()
+            }
+
+
+            function removeGroup(numOfGroup){
+                for (let i = 0; i < allMatched.length; i++) {
+                    if(allMatched[i].index == numOfGroup){
+                        allMatched.splice(i, 1);
+                        break;
+                    }
+                }
+              
+                svg.selectAll(".settlements"+ numOfGroup).remove();
+                var myList = document.getElementById('groupsID');
+                myList.innerHTML = '';
+
+                d3.select("#groupsID")
+                    .selectAll("li")
+                    .data(allMatched)
+                    .enter()
+                    .append("li")
+                    .attr("class", d => "list"+d.index)
+                    .html(d => '<div class="input-color"><div class="removeGroup" onclick="removeGroup('+ d.index +')">X</div><div class="color-box" style="background-color: '+ d.metadata.color +';"></div><div class="content">' + d.metadata.type + ": " + d.metadata.string + " (" + d.metadata.number +")" + '</div></div>');
+            
+            }
+
+            var input = document.getElementById("myInput");
+            input.addEventListener("keyup", function(event) {
+                if (event.keyCode === 13) {
+                event.preventDefault();
+                document.getElementById("addBtn").click();
+                }
+            });
+        </script>
+    </body>
+</html>
