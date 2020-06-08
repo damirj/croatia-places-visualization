@@ -1,0 +1,66 @@
+ul {
+    list-style: none;
+}
+
+.input-color {
+    position: relative;
+    font-size: 17px;
+}
+
+.input-color input {
+    padding-left: 20px;
+}
+
+.content {
+    padding-left: 20px;
+    display: inline;
+}
+
+.input-color .color-box {
+    width: 17px;
+    height: 17px;
+    display: inline-block;
+    background-color: #ccc;
+    position: absolute;
+
+    top: 5px;
+}
+
+.app{
+    margin-top: 10px;
+    padding-left: 25px !important;
+}
+
+.searchApp{
+    margin-top: 20px;
+    padding-left: 50px !important;
+}
+
+.btn{
+    margin-left: 10px;
+}
+
+#groupsID{
+    padding-left: 10px;
+    margin-top: 15px;
+}
+
+.radioButtons{
+    display: inline;
+}
+
+.prefix{
+    margin-left: 30px;
+}
+
+.canvas{
+    display: contents;
+}
+
+.removeGroup{
+    font-weight: bold;
+    color: #C1292E;
+    display: inline;
+    padding-right: 10px;
+    cursor: pointer;
+}

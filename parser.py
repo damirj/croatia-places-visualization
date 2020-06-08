@@ -35,6 +35,6 @@ def write_and_save(filename, data):
     handle.close()
 
 
-filename = "places.txt"
+filename = "placesUpdate.txt"
 places = read_parse(filename)
-write_and_save("parsed.txt", places)
+write_and_save("parsedUpdate.txt", places)
