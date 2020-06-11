@@ -39,11 +39,12 @@
                     
                     <ul id="groupsID">   
                     </ul>
+
+                    
                 </div>
 
             </div>
         </div>
-        
         
 
         <script>
@@ -57,7 +58,7 @@
             var fix = "Sufix";
             var colors = ["#A6D3A0", "#153243", "#FCB07E", "#FB3640", "#3581B8", "#566246", "#C0B9DD", "#886F68", "#5F4BB6", "#26F0F1", "#D81E5B", "#EDFF86", "#0B4F6C", "#DCC7BE", "#000022", "#5E8C61", "#A2D729", "#FA824C"];
 
-
+            // Setting the mercator projection
             var svg = d3.select("svg")
             var projection = d3.geoMercator()
                                 .translate([ -1500, 6350 ])
@@ -65,6 +66,7 @@
 
             var path = d3.geoPath(projection);
 
+            // Loading topojson files for the map of Croatia and all the settlements of Croatia
             d3.json("cro.json", loadShape);
             d3.json("parsedTopojson.json", loadPlaces);
             
@@ -72,6 +74,7 @@
             function loadShape (error, data) {
                 var counties = topojson.feature(data, data.objects.custom).features;
 
+                // Drawing the map of Croatia
                 svg.selectAll(".counties")
                     .data(counties)
                     .enter().append("path")
@@ -83,16 +86,18 @@
 
 
             function loadPlaces (error, data) {
-                //console.log(data)
+                // Loading topojson file into global variable "settlements"
                 settlements = topojson.feature(data, data.objects.parsed).features;
-                //console.log(settlements)
 
+                // Loading all names of places from topojson into global variable "places"
                 for (let i = 0; i < settlements.length; i++) {
                     places.push(settlements[i].properties.name) 
                 }
             }
 
-
+            // Function for onKeyUp change of input
+            // It's function is to get all the matched places and save them into variable "match"
+            // and then call function "drawPlaces()"
             function filterPlaces() {
               input = document.getElementById('myInput');
               match = [];
@@ -114,7 +119,9 @@
             }
 
 
+            // The function that is doing the drawing of matching places from input
             function drawPlaces(){
+                // First delete all previous matches from last input
                 svg.selectAll(".settlements").remove()
                 var matchSettlements = []
                 if(match.length != settlements.length){
@@ -123,16 +130,18 @@
                     }
                 }
 
+                // Draw matched places on map. Color: white
                 svg.selectAll(".settlements")
                     .data(matchSettlements)
                     .enter().append("path")
                     .attr("class", "settlements")
-                    .attr("d", path.pointRadius(3))
+                    .attr("d", path.pointRadius(2.5))
                     .style("fill", "#ffffff")
                     .style("stroke", "#000000");
             }
 
-
+            // This function get's called when "Add" button is clicked
+            // It adds a new group on map
             function addGroup(){
                 var matchSettlements = []
                 if(match.length != settlements.length){
@@ -146,6 +155,8 @@
                 }else{
                     groupNumber = allMatched[allMatched.length - 1].index + 1;
                 }
+
+                // Drawing matched places as a new group with new color. Color: colors[groupNumber]
                 svg.selectAll(".settlements"+groupNumber)
                     .data(matchSettlements)
                     .enter().append("path")
@@ -154,7 +165,7 @@
                     .style("fill", colors[groupNumber])
                     .style("stroke", "#000000");
 
-
+                // Saving all groups into "allMatched" variable
                 var groupData = {string: input.value, type: fix, color: colors[groupNumber], number: matchSettlements.length};
                 allMatched.push({index: groupNumber, data: matchSettlements, metadata: groupData})
                 
@@ -162,30 +173,35 @@
                     groupNumber = 1;
                 }
 
-                //console.log(allMatched)
+                // Drawing the list of groups under the input bar
                 d3.select("#groupsID")
                     .selectAll("li")
                     .data(allMatched)
                     .enter()
                     .append("li")
                     .attr("class", d => "list"+d.index)
-                    .html(d => '<div class="input-color"><div class="removeGroup" onclick="removeGroup('+ d.index +')">X</div><div class="color-box" style="background-color: '+ d.metadata.color +';"></div><div class="content">' + d.metadata.type + ": " + d.metadata.string + " (" + d.metadata.number +")" + '</div></div>');   
+                    .html(d => '<div class="input-color"><div class="removeGroup" onclick="removeGroup('+ d.index +')">X</div><div class="color-box" style="background-color: '+ d.metadata.color +';"></div><div class="content">' + d.metadata.type + ": " + d.metadata.string + " (" + d.metadata.number +")" + '</div></div>');     
             }
 
-
+            // Functions for setting radiobuttons "Sufix" and then calling "filterPlaces()"
+            // to do redraw
             function setSufix(){
                 fix="Sufix"
                 filterPlaces()
             }
 
-
+            // Functions for setting radiobuttons "Prefix" and then calling "filterPlaces()"
+            // to do redraw
             function setPrefix(){
                 fix="Prefix"
                 filterPlaces()
             }
 
-
+            // When is little red X next to group name pressed this function is called
+            // It removes the selected group
             function removeGroup(numOfGroup){
+                // From global variable "allMatched" that contains all groups
+                // it deletes selected group
                 for (let i = 0; i < allMatched.length; i++) {
                     if(allMatched[i].index == numOfGroup){
                         allMatched.splice(i, 1);
@@ -193,10 +209,14 @@
                     }
                 }
               
+                // It deletes that group from map
                 svg.selectAll(".settlements"+ numOfGroup).remove();
+
+                // Deletes the whole list that sits under input bar
                 var myList = document.getElementById('groupsID');
                 myList.innerHTML = '';
 
+                // And then redraws it again without the deleted group
                 d3.select("#groupsID")
                     .selectAll("li")
                     .data(allMatched)
@@ -207,6 +227,7 @@
             
             }
 
+            // Code for when the input is selected to press Enter button to add group
             var input = document.getElementById("myInput");
             input.addEventListener("keyup", function(event) {
                 if (event.keyCode === 13) {
